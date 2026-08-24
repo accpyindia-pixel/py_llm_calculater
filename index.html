@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PYCO - LLM Calculator | PY INDIA</title>
+
+  <!-- ── Favicon using CDN icon (lightning bolt / AI theme) ── -->
+  <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/openai.svg" />
+  <!-- Fallback: emoji favicon via SVG data URI -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%237b6cf6'/><text y='72' x='50' text-anchor='middle' font-size='60' font-family='system-ui'>⚡</text></svg>" />
+  <!-- Apple touch icon -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%237b6cf6'/><text y='72' x='50' text-anchor='middle' font-size='60' font-family='system-ui'>⚡</text></svg>" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ══════════════ TOP NAV ══════════════ -->
+  <header class="topnav">
+    <div class="topnav-left">
+      <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle Filters">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="brand">
+        <div class="brand-logo">
+          <span class="brand-logo-py">PY</span><span class="brand-logo-co">CO</span>
+        </div>
+        <div class="brand-text-block">
+          <span class="brand-name">PYCO <strong>LLM Calculator</strong></span>
+          <span class="brand-sub">A product of PY INDIA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Nav Tabs -->
+    <nav class="main-tabs" id="mainTabs">
+      <button class="main-tab active" data-tab="compare"   onclick="switchTab('compare')">📊 Compare</button>
+      <button class="main-tab"        data-tab="chart"     onclick="switchTab('chart')">📈 Chart</button>
+      <button class="main-tab"        data-tab="specs"     onclick="switchTab('specs')">🔬 Specs</button>
+      <button class="main-tab"        data-tab="bestpick"  onclick="switchTab('bestpick')">🏆 Best Pick</button>
+    </nav>
+
+    <div class="topnav-right">
+      <!-- Currency Toggle -->
+      <div class="currency-toggle" id="currencyToggle" onclick="toggleCurrency()" title="Switch USD / INR">
+        <span class="currency-lbl usd">USD</span>
+        <div class="toggle-pill"></div>
+        <span class="currency-lbl inr">INR</span>
+      </div>
+      <div class="total-summary" id="topSummary">
+        <span class="summary-label">Models shown</span>
+        <span class="summary-val" id="modelCount">—</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════ SHELL ══════════════ -->
+  <div class="shell" id="shell">
+
+    <!-- ══════ LEFT SIDEBAR ══════ -->
+    <aside class="sidebar" id="sidebar">
+
+      <!-- Sidebar Tabs -->
+      <div class="sidebar-tabs">
+        <button class="stab active" data-stab="usage"     onclick="switchStab('usage')">⚙️ Usage</button>
+        <button class="stab"        data-stab="providers" onclick="switchStab('providers')">🏢 Providers</button>
+        <button class="stab"        data-stab="filters"   onclick="switchStab('filters')">🔧 Filters</button>
+      </div>
+
+      <!-- ── STAB: Usage ─── -->
+      <div class="stab-panel active" id="stab-usage">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Quick Presets</div>
+          <div class="preset-list">
+            <button class="preset-item" onclick="applyPreset('chatbot')">
+              <span class="preset-icon">💬</span>
+              <div class="preset-info">
+                <span class="preset-name">Chatbot</span>
+                <span class="preset-desc">500 in · 300 out · 500 req/day</span>
+              </div>
+            </button>
+            <button class="preset-item" onclick="applyPreset('summarizer')">
+              <span class="preset-icon">📄</span>
+              <div class="preset-info">
+                <span class="preset-name">Summarizer</span>
+                <span class="preset-desc">5K in · 500 out · 200 req/day</span>
+              </div>
+            </button>
+            <button class="preset-item" onclick="applyPreset('codeAssist')">
+              <span class="preset-icon">💻</span>
+              <div class="preset-info">
+                <span class="preset-name">Code Assistant</span>
+                <span class="preset-desc">3K in · 1.5K out · 150 req/day</span>
+              </div>
+            </button>
+            <button class="preset-item" onclick="applyPreset('enterprise')">
+              <span class="preset-icon">🏢</span>
+              <div class="preset-info">
+                <span class="preset-name">Enterprise</span>
+                <span class="preset-desc">20K in · 5K out · 1K req/day</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Token Usage</div>
+          <div class="form-group">
+            <label>Input Tokens / Request</label>
+            <input type="number" id="inputTokens" value="10000" min="0" step="1000" oninput="renderAll()" />
+            <span class="hint">~1K tokens ≈ 750 words</span>
+          </div>
+          <div class="form-group">
+            <label>Output Tokens / Request</label>
+            <input type="number" id="outputTokens" value="2000" min="0" step="500" oninput="renderAll()" />
+            <span class="hint">Typically 20–30% of input</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Volume & Duration</div>
+          <div class="form-group">
+            <label>Requests per Day</label>
+            <input type="number" id="requestsPerDay" value="100" min="1" step="10" oninput="renderAll()" />
+          </div>
+          <div class="form-group">
+            <label>Duration (Days)</label>
+            <input type="number" id="days" value="30" min="1" max="365" oninput="renderAll()" />
+          </div>
+          <div class="form-group">
+            <label>Total Requests</label>
+            <div class="computed-val" id="totalRequests">3,000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STAB: Providers ─── -->
+      <div class="stab-panel" id="stab-providers">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">
+            Select Providers
+            <div class="stab-actions">
+              <button class="mini-btn" onclick="selectAllProviders()">All</button>
+              <button class="mini-btn" onclick="clearProviders()">None</button>
+            </div>
+          </div>
+          <div class="provider-list" id="providerList"></div>
+        </div>
+      </div>
+
+      <!-- ── STAB: Filters ─── -->
+      <div class="stab-panel" id="stab-filters">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Sort Results</div>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="sortBy" value="cost" checked onchange="renderAll()" />
+              <span>💰 Lowest Cost</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="sortBy" value="provider" onchange="renderAll()" />
+              <span>🏢 Provider</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="sortBy" value="context" onchange="renderAll()" />
+              <span>🗂 Context Window</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="sortBy" value="speed" onchange="renderAll()" />
+              <span>⚡ Speed</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Model Tier</div>
+          <div class="checkbox-group" id="tierFilter">
+            <label class="check-item">
+              <input type="checkbox" value="flagship" checked onchange="renderAll()" />
+              <span class="tier-dot flagship"></span> Flagship
+            </label>
+            <label class="check-item">
+              <input type="checkbox" value="efficient" checked onchange="renderAll()" />
+              <span class="tier-dot efficient"></span> Efficient
+            </label>
+            <label class="check-item">
+              <input type="checkbox" value="budget" checked onchange="renderAll()" />
+              <span class="tier-dot budget"></span> Budget
+            </label>
+            <label class="check-item">
+              <input type="checkbox" value="reasoning" checked onchange="renderAll()" />
+              <span class="tier-dot reasoning"></span> Reasoning
+            </label>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Speed Filter</div>
+          <div class="checkbox-group" id="speedFilter">
+            <label class="check-item"><input type="checkbox" value="Blazing Fast" checked onchange="renderAll()" /><span>🚀 Blazing Fast</span></label>
+            <label class="check-item"><input type="checkbox" value="Very Fast"    checked onchange="renderAll()" /><span>⚡ Very Fast</span></label>
+            <label class="check-item"><input type="checkbox" value="Fast"         checked onchange="renderAll()" /><span>🏃 Fast</span></label>
+            <label class="check-item"><input type="checkbox" value="Moderate"     checked onchange="renderAll()" /><span>🚶 Moderate</span></label>
+            <label class="check-item"><input type="checkbox" value="Slow"         checked onchange="renderAll()" /><span>🐢 Slow</span></label>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Max Budget (Total $)</div>
+          <div class="form-group">
+            <input type="number" id="maxBudget" placeholder="No limit" min="0" step="10" oninput="renderAll()" />
+            <span class="hint">Leave blank for no limit</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Min Context Window</div>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="minCtx" value="0"       checked onchange="renderAll()" /><span>Any</span></label>
+            <label class="radio-item"><input type="radio" name="minCtx" value="32000"         onchange="renderAll()" /><span>32K+</span></label>
+            <label class="radio-item"><input type="radio" name="minCtx" value="128000"        onchange="renderAll()" /><span>128K+</span></label>
+            <label class="radio-item"><input type="radio" name="minCtx" value="200000"        onchange="renderAll()" /><span>200K+</span></label>
+            <label class="radio-item"><input type="radio" name="minCtx" value="1000000"       onchange="renderAll()" /><span>1M+</span></label>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ══════ MAIN CONTENT ══════ -->
+    <main class="content" id="content">
+
+      <!-- ─── TAB: Compare ─── -->
+      <div class="tab-panel active" id="tab-compare">
+        <div class="content-toolbar">
+          <div class="toolbar-search-wrap">
+            <span class="toolbar-search-icon">🔍</span>
+            <input
+              type="text"
+              id="modelSearch"
+              class="toolbar-search"
+              placeholder="Search models, providers, features…"
+              oninput="renderAll()"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="toolbar-search-clear" id="searchClear" onclick="clearSearch()" title="Clear">✕</button>
+          </div>
+          <div class="toolbar-right">
+            <div class="result-count" id="resultCount">Loading…</div>
+            <div class="view-toggle">
+              <button class="view-btn active" id="viewGrid" onclick="setView('grid')" title="Grid View">⊞</button>
+              <button class="view-btn"        id="viewList" onclick="setView('list')" title="List View">☰</button>
+            </div>
+          </div>
+        </div>
+        <div class="results-grid" id="resultsGrid"></div>
+      </div>
+
+      <!-- ─── TAB: Chart ─── -->
+      <div class="tab-panel" id="tab-chart">
+        <div class="chart-header">
+          <h2>Cost Comparison — Top 12 Models</h2>
+          <p class="chart-sub">Sorted by total cost for your configured usage</p>
+        </div>
+        <div class="chart-bars" id="chartBars"></div>
+      </div>
+
+      <!-- ─── TAB: Specs ─── -->
+      <div class="tab-panel" id="tab-specs">
+        <div class="specs-toolbar">
+          <input type="text" id="specsSearch" placeholder="🔍  Search models…" oninput="filterSpecsTable()" />
+        </div>
+        <div class="specs-table-wrap">
+          <table class="specs-table" id="specsTable"></table>
+        </div>
+      </div>
+
+      <!-- ─── TAB: Best Pick ─── -->
+      <div class="tab-panel" id="tab-bestpick">
+        <div class="bestpick-grid" id="bestpickGrid"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    <p>Prices from official provider docs · August 2026 · All prices USD per 1M tokens · Not financial advice</p>
+    <p class="footer-copy">© 2026 <strong>PY INDIA</strong>. All rights reserved. | PYCO - LLM Calculator</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
